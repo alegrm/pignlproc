@@ -51,7 +51,7 @@ def fetch_text_from_url(url):
 
 
 def categorize(schema, text, n_categories=5, n_terms=30,
-               server='http://localhost:8983/solr'):
+               server='http://localhost:8080/solr'):
     """Categorize a piece of text using a MoreLikeThis query on Solr
 
     This is basically an approximated k-Neareast Neighbors using the TF-IDF

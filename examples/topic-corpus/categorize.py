@@ -107,7 +107,7 @@ if __name__ == "__main__":
         '--schema', default='schema.xml',
         help='Path to the Solr schema file')
     parser.add_argument(
-        '--solr', default='http://localhost:8983/solr',
+        '--solr', default='http://localhost:8080/solr',
         help='URL of the Solr HTTP endpoint')
     parser.add_argument(
         '--categories', default=5,

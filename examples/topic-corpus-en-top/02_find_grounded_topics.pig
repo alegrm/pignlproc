@@ -13,7 +13,7 @@ topic_counts = LOAD 'workspace/topics_counts.tsv'
   AS (topicUri: chararray, articleCount: long, narrowerTopicCount:long,
       broaderTopicCount);
 
-topic_parents = LOAD 'workspace/skos_categories_en.nt.bz2'
+topic_parents = LOAD 'workspace/MainCategories.nt.bz2'
   USING pignlproc.storage.UriUriNTriplesLoader(
     'http://www.w3.org/2004/02/skos/core#broader',
     'http://dbpedia.org/resource/',

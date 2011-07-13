@@ -16,7 +16,7 @@ article_topics = LOAD 'workspace/article_categories_en.nt.bz2'
     'http://dbpedia.org/resource/')
   AS (articleUri: chararray, topicUri: chararray);
 
-topic_parents = LOAD 'workspace/skos_categories_en.nt.bz2'
+topic_parents = LOAD 'workspace/MainCategories.nt.bz2'
   USING pignlproc.storage.UriUriNTriplesLoader(
     'http://www.w3.org/2004/02/skos/core#broader',
     'http://dbpedia.org/resource/',

@@ -37,6 +37,13 @@ topic_counts_filtered = FILTER topic_counts BY
   AND topicUri != 'Category:Chronology'
   AND topicUri != 'Category:Events'
   AND topicUri != 'Category:Years'
+  AND topicUri != 'Category:Decads'
+  AND topicUri != 'Category:Days'
+  AND topicUri != 'Category:Dates'
+  AND topicUri != 'Category:Chronology'
+  AND topicUri != 'Category:Time'
+  AND topicUri != 'Category:Calendars'
+  AND topicUri != 'Category:Months'
   AND topicUri != 'Year_of_birth_missing_%28living_people%29'
   AND topicUri != 'Year_of_death_missing'
   AND topicUri != 'Place_of_birth_missing_%28living_people%29'
@@ -48,6 +55,8 @@ topic_counts_filtered = FILTER topic_counts BY
   AND topicUri != 'Category:People_by_period'
   AND topicUri != 'Category:Surnames';
 
+-- AGRM and filter those that have _by_ on the category
+topic_counts_filtered2 = FILTER topic_counts_filtered BY not topicUri matches '.*_by_.*';
 
 -- Project early: we don't need to load the abstract content
 articles = FOREACH article_abstracts GENERATE
@@ -55,7 +64,8 @@ articles = FOREACH article_abstracts GENERATE
 
 -- Build are candidate matching article URI by removing the 'Category:'
 -- part of the topic URI
-candidate_grounded_topics = FOREACH topic_counts_filtered GENERATE
+-- AGRM generates a list with the filters candidates? on candidatePrimaryArticleUri
+candidate_grounded_topics = FOREACH topic_counts_filtered2 GENERATE
   topicUri, REPLACE(topicUri, 'Category:', '') AS candidatePrimaryArticleUri,
   articleCount, narrowerTopicCount, broaderTopicCount;
 

@@ -5,6 +5,8 @@ build a universal text document classifier based on the taxonomy of Wikipedia
 categories that has been extracted as RDF dumps (using the SKOS vocabulary) by
 the DBpedia crew.
 
+Here is a sample file generated using those Pig scripts: [topics_abstracts.tsv.gz](http://dl.dropbox.com/u/5743203/data/topics_abstracts.tsv.gz) (387 MB)
+
 Categorization can then be achieved by using the `MoreLikeThisHandler` that is
 able to perform text similarity / relatedness queries. A sample client able to
 perform such queries is provided in the `categorize.py` python script.
@@ -33,15 +35,15 @@ perform such queries is provided in the `categorize.py` python script.
 
        sh download_data.sh
 
-- Run the scripts from the toplevel folder of `pignlproc`
-  (this can take more than 1h on a single machine):
+- Run the scripts from the toplevel folder of `pignlproc` (this can take more than
+  1h on a single machine):
 
-      pig -x local -b examples/topic-corpus/01_count_child_topics.pig
-      pig -x local -b examples/topic-corpus/02_find_grounded_topics.pig
-      pig -x local -b examples/topic-corpus/03_find_descendants.pig
-      pig -x local -b examples/topic-corpus/04_find_grounded_topics_articles.pig
-      pig -x local -b examples/topic-corpus/05_build_grounded_ancestry.pig
-      pig -x local -b examples/topic-corpus/06_extract_aggregate_topic_abstracts.pig
+        pig -x local -b examples/topic-corpus/01_count_child_topics.pig
+        pig -x local -b examples/topic-corpus/02_find_grounded_topics.pig
+        pig -x local -b examples/topic-corpus/03_find_descendants.pig
+        pig -x local -b examples/topic-corpus/04_find_grounded_topics_articles.pig
+        pig -x local -b examples/topic-corpus/05_build_grounded_ancestry.pig
+        pig -x local -b examples/topic-corpus/06_extract_aggregate_topic_abstracts.pig
 
 In total running those scripts on a single machine would last 1 or 2 hours. It
 would be possible to run then on a Hadoop cluster to speed up the processing but
@@ -87,7 +89,7 @@ We can now launching the indexing itself using the CSV / TSV importer of Solr
 This process should last less than an hour and eat an additional 5.8GB on your
 hardrive.
 
-TODO: Split the paths on the `%20%20` character at import time to get a
+TODO: Split the paths on the `%20` character at import time to get a
 multi-valued field.
 
 

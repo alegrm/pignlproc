@@ -11,9 +11,7 @@ You can install sunburnt (the solr / python connector) and lxml with::
 """
 
 import os
-import sys
 import urllib2
-import uuid
 from collections import Counter
 from pprint import pprint
 from random import Random
@@ -23,15 +21,6 @@ import lxml.html
 from lxml.etree import ElementTree
 
 import argparse
-
-
-class MoreLikeThisDocument(object):
-    """Transient document to get indexed to be able to do a similarity query"""
-
-    def __init__(self, text):
-        self.id = uuid.uuid4().get_hex()
-        self.type = "mlt_query_document"
-        self.text = text
 
 
 def fetch_text_from_url(url):
@@ -51,49 +40,45 @@ def fetch_text_from_url(url):
 
 
 def categorize(schema, text, n_categories=5, n_terms=30,
-               server='http://localhost:8080/solr'):
+               server='http://localhost:8983/solr', terms=False):
     """Categorize a piece of text using a MoreLikeThis query on Solr
 
     This is basically an approximated k-Neareast Neighbors using the TF-IDF
     similarity of the Solr index. The query is truncated to the top n_terms
     terms with maximum weights for efficiency reasons.
     """
-    q = MoreLikeThisDocument(text)
     solr = sunburnt.SolrInterface(server, schema)
+    interestingTerms = 'list' if terms else 'none'
+    q = solr.mlt_query("text", content=text, maxqt=n_terms,
+                       interestingTerms=interestingTerms)
+    q = q.paginate(rows=n_categories)
+    q = q.field_limit(score=True, all_fields=True)
+    return q.execute()
 
-    # TODO: add support for the MoreLikeThisHandler instead to avoid useless
-    # indexing and deletions
-    # https://github.com/tow/sunburnt/issues/18
-    solr.add(q)
-    solr.commit()
-    try:
-        mlt_query = solr.query(id=q.id).mlt(
-            "text", maxqt=n_terms, count=n_categories)
-        mlt_results = mlt_query.execute().more_like_these
-        if q.id in mlt_results:
-            return [d['id'] for d in mlt_results[q.id].docs]
-        else:
-            print "ERROR: query document with id='%s' not found" % q.id
-            return []
-    finally:
-        solr.delete(q)
-        solr.commit()
 
-def bagging_categorize(schema, text, n_categories=5, n_bootstraps=5, seed=42):
+def bagging_categorize(schema, text, n_categories=5, n_bootstraps=5, seed=42,
+                       n_terms=30, server='http://localhost:8983/solr',
+                       terms=False):
     """Bootstrap aggregating version of the kNN categorization"""
     tokens = text.split()
     bigrams = [" ".join(tokens[i: i + 1]) for i in range(len(tokens))]
     rng = Random(seed)
     bootstrap_size = 2 * len(bigrams) / 3
 
-    categories = []
+    n_categories
+    categories = {}
+    category_ids = []
     for i in range(n_bootstraps):
         doc = u" ".join(rng.sample(bigrams, bootstrap_size))
-        categories.extend(categorize(schema, doc, n_categories * 2))
+        results = categorize(schema, doc, server=server, n_terms=n_terms,
+                             terms=terms, n_categories=n_categories * 2)
+        categories.update(dict((cat['id'], cat) for cat in results))
+        category_ids.extend(cat['id'] for cat in results)
 
-    counted_categories = Counter(categories)
-    return [cat for cat, c in counted_categories.most_common(n_categories)
-            if c > 2 * n_bootstraps / 3]
+    counted_categories = Counter(category_ids)
+    return [categories[id]
+            for id, count in counted_categories.most_common(n_categories)
+            if count > 2 * n_bootstraps / 3]
 
 
 if __name__ == "__main__":
@@ -107,8 +92,23 @@ if __name__ == "__main__":
         '--schema', default='schema.xml',
         help='Path to the Solr schema file')
     parser.add_argument(
-        '--solr', default='http://localhost:8080/solr',
+        '--solr', default='http://localhost:8983/solr',
         help='URL of the Solr HTTP endpoint')
+    parser.add_argument(
+        '--terms', default=30,
+        type=int, help='Number of interesting terms to use for the query')
+    parser.add_argument(
+        '--print-raw-text', default=False, action="store_true",
+        help='Print the text of the document used as a query')
+    parser.add_argument(
+        '--print-terms', default=False, action="store_true",
+        help='Print the selected terms to use for the query')
+    parser.add_argument(
+        '--print-paths', default=False, action="store_true",
+        help='Print the paths of the categories')
+    parser.add_argument(
+        '--bagging', default=False, action="store_true",
+        help='Use the bootstrap aggregating categorizer.')
     parser.add_argument(
         '--categories', default=5,
         type=int, help='Number of categories to return')
@@ -118,12 +118,39 @@ if __name__ == "__main__":
     document = args.document
     server = args.solr
     n_categories = args.categories
+    n_terms = args.terms
+    print_terms = args.print_terms
 
     if document.startswith("http://"):
         document = fetch_text_from_url(document)
     elif os.path.exists(document):
         document = open(document).read()
 
-    for topic in categorize(schema, document, server=server,
-                            n_categories=n_categories):
-        print topic
+    if args.bagging:
+        results = bagging_categorize(schema, document, server=server,
+                                     n_categories=n_categories,
+                                     n_terms=n_terms)
+    else:
+        results = categorize(schema, document, server=server,
+                             n_categories=n_categories,
+                             terms=print_terms,
+                             n_terms=n_terms)
+    for topic in results:
+        print topic['id'].ljust(50) + " [%0.3f]" % topic['score']
+
+    if args.print_paths:
+        paths = set()
+        for topic in results:
+            paths.update(topic['paths'])
+        for path in sorted(paths):
+            print path
+
+    if args.print_raw_text:
+        print "Source text:"
+        print "\"\"\""
+        print document
+        print "\"\"\""
+
+    if print_terms and not args.bagging:
+        print "Interesting terms:"
+        pprint(results.interesting_terms)

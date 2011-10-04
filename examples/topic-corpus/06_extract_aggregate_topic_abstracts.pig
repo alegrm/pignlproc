@@ -8,8 +8,9 @@ SET default_parallel 20
 -- Register the project jar to use the custom loaders and UDFs
 REGISTER target/pignlproc-0.1.0-SNAPSHOT.jar
 DEFINE AggregateTextBag pignlproc.evaluation.AggregateTextBag();
-DEFINE JoinPaths pignlproc.evaluation.ConcatTextBag('  ');
+DEFINE JoinPaths pignlproc.evaluation.ConcatTextBag(' ');
 DEFINE SafeTsvText pignlproc.evaluation.SafeTsvText();
+DEFINE CheckAbstract pignlproc.evaluation.CheckAbstract();
 DEFINE NTriplesAbstractsStorage pignlproc.storage.UriStringLiteralNTriplesStorer(
   'http://pignlproc.org/merged-abstracts', 'http://dbpedia.org/resource/', 'en');
 
@@ -24,37 +25,60 @@ article_abstracts = LOAD 'workspace/long_abstracts_en.nt.bz2'
 grounded_topics_articles = LOAD 'workspace/grounded_topics_articles.tsv'
   AS (topicUri: chararray, articleCount: long, articleUri: chararray);
 
-grounded_ancestry = LOAD 'workspace/grounded_ancestry.tsv'
+topic_ancestry = LOAD 'workspace/grounded_ancestry.tsv'
   AS (topicUri: chararray, primaryArticleUri: chararray,
       articleCount: long, fullPath: chararray,
       groundedPath: chararray, groundedPathLength: long);
 
--- Join with the abstract by articleUri
+grounded_topic_ancestry = FILTER topic_ancestry
+  BY primaryArticleUri IS NOT NULL;
+
+grouped_topic_ancestry = GROUP grounded_topic_ancestry BY topicUri;
+
+topic_paths = FOREACH grouped_topic_ancestry
+  GENERATE
+    group AS topicUri,
+    JoinPaths(grounded_topic_ancestry.groundedPath) AS paths;
+
+-- gather the list of articles that match the subset of topic with path
+joined_topic_articles = JOIN
+  topic_paths BY topicUri,
+  grounded_topics_articles BY topicUri;
+
+grounded_topics_articles_with_paths = FOREACH joined_topic_articles
+  GENERATE
+  topic_paths::topicUri AS topicUri,
+  articleUri AS articleUri,
+  paths AS paths;
+
+-- filter out abstracts that are boring
+filtered_article_abstracts = FILTER article_abstracts
+  BY CheckAbstract(articleAbstract);
+
+-- Join with the abstracts by articleUri
 joined_topics_abstracts = JOIN
-  grounded_topics_articles BY articleUri,
-  article_abstracts BY articleUri;
+  grounded_topics_articles_with_paths BY articleUri,
+  filtered_article_abstracts BY articleUri;
 
 topics_abstracts = FOREACH joined_topics_abstracts
   GENERATE
-   grounded_topics_articles::topicUri AS topicUri,
-   grounded_topics_articles::articleUri AS articleUri,
-   article_abstracts::articleAbstract AS articleAbstract;
+   grounded_topics_articles_with_paths::topicUri AS topicUri,
+   grounded_topics_articles_with_paths::paths AS paths,
+   filtered_article_abstracts::articleUri AS articleUri,
+   filtered_article_abstracts::articleAbstract AS articleAbstract;
 
-grouped_topics2 = GROUP
-  topics_abstracts BY topicUri,
-  grounded_ancestry BY topicUri;
+grouped_topics2 = GROUP topics_abstracts BY (topicUri, paths);
 
 bagged_abstracts = FOREACH grouped_topics2
   GENERATE
-    group AS topicUri,
+    group.$0 AS topicUri,
     COUNT(topics_abstracts.articleUri) AS abstractCount,
-    AggregateTextBag(topics_abstracts.articleAbstract) AS aggregateTopicAbstract,
-    COUNT(grounded_ancestry.groundedPath) AS pathsCount,
-    JoinPaths(grounded_ancestry.groundedPath) AS paths;
+	group.$1 AS paths,
+    AggregateTextBag(topics_abstracts.articleAbstract) AS aggregateTopicAbstract;
 
 -- filter again after abstract joins in case of missing abstract
 -- because we do not resolve redirect yet
-filtered_topics2 = FILTER bagged_abstracts BY abstractCount > 10 AND pathsCount != 0;
+filtered_topics2 = FILTER bagged_abstracts BY abstractCount > 10;
 
 ordered_topics = ORDER filtered_topics2 BY abstractCount DESC, topicUri ASC;
 
@@ -62,7 +86,7 @@ ordered_topics = ORDER filtered_topics2 BY abstractCount DESC, topicUri ASC;
 tsv_topics_abstracts = FOREACH ordered_topics
   GENERATE
     topicUri, abstractCount, paths,
-    SafeTsvText(aggregateTopicAbstract) AS primaryArticleAbstract;
+    SafeTsvText(aggregateTopicAbstract) AS aggregateTopicAbstract;
 
 STORE tsv_topics_abstracts
   INTO 'workspace/topics_abstracts.tsv';

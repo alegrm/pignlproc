@@ -44,17 +44,61 @@ topic_counts_filtered = FILTER topic_counts BY
   AND topicUri != 'Category:Chronology'
   AND topicUri != 'Category:Events'
   AND topicUri != 'Category:Years'
+  AND topicUri != 'Category:Decads'
+  AND topicUri != 'Category:Days'
+  AND topicUri != 'Category:Dates'
+  AND topicUri != 'Category:Time'
+  AND topicUri != 'Category:Calendars'
+  AND topicUri != 'Category:Months'
   AND topicUri != 'Year_of_birth_missing_%28living_people%29'
   AND topicUri != 'Year_of_death_missing'
   AND topicUri != 'Place_of_birth_missing_%28living_people%29'
   AND topicUri != 'Category:Year_of_birth_unknown'
   AND topicUri != 'Category:Year_of_birth_missing_%28living_people%29'
   AND topicUri != 'Category:Articles_missing_birth_or_death_information'
-  AND topicUri != 'Category:Categories_by_language'
   AND topicUri != 'Category:Place_of_birth_missing_%28living_people%29'
-  AND topicUri != 'Category:People_by_period'
-  AND topicUri != 'Category:Surnames';
+  AND topicUri != 'Category:Surnames'
+  AND topicUri != 'Category:Wikipedia_1.0_assessments';
 
+-- AGRM start: get the children of  undesired topics to remove them as well
+
+filter_topic_children = FILTER topic_parents BY 
+	broaderTopicUri == 'Category:People'
+  OR broaderTopicUri  == 'Category:Living_people'
+  OR broaderTopicUri  == 'Category:Dead_people'
+  OR broaderTopicUri  == 'Category:Chronology'
+  OR broaderTopicUri  == 'Category:Events'
+  OR broaderTopicUri  == 'Category:Years'
+  OR broaderTopicUri  == 'Category:Decads'
+  OR broaderTopicUri  == 'Category:Days'
+  OR broaderTopicUri  == 'Category:Dates'
+  OR broaderTopicUri  == 'Category:Time'
+  OR broaderTopicUri  == 'Category:Calendars'
+  OR broaderTopicUri  == 'Category:Months'
+  OR broaderTopicUri  == 'Year_of_birth_missing_%28living_people%29'
+  OR broaderTopicUri  == 'Year_of_death_missing'
+  OR broaderTopicUri  == 'Place_of_birth_missing_%28living_people%29'
+  OR broaderTopicUri  == 'Category:Year_of_birth_unknown'
+  OR broaderTopicUri  == 'Category:Year_of_birth_missing_%28living_people%29'
+  OR broaderTopicUri  == 'Category:Articles_missing_birth_or_death_information'
+  OR broaderTopicUri  == 'Category:Place_of_birth_missing_%28living_people%29'
+  OR broaderTopicUri  == 'Category:Surnames'
+  OR broaderTopicUri  == 'Category:Wikipedia_1.0_assessments';
+  
+topic_counts_children_join = JOIN topic_counts_filtered BY topicUri
+	LEFT OUTER, filter_topic_children BY narrowerTopicUri;
+
+topic_counts_children_filter = FILTER topic_counts_children_join BY broaderTopicUri IS NULL;
+
+topic_counts_all_filter = FOREACH topic_counts_children_filter GENERATE
+	topicUri, articleCount, narrowerTopicCount, broaderTopicCount;
+
+-- filter those that have _by_ and Wikipedia on the category
+topic_counts_all_filtered = FILTER topic_counts_all_filter BY
+	not topicUri matches '.*_by_.*' 
+	AND not topicUri matches 'Category:Wikipedia_.*';
+	
+-- AGRM end
 
 -- Project early: we don't need to load the abstract content: use NULL as
 -- false marker to be able to combine them with missing abstracts later
@@ -66,7 +110,7 @@ STORE articles INTO 'workspace/articles_abstract_check.tsv';
 
 -- Build are candidate matching article URI by removing the 'Category:'
 -- part of the topic URI
-candidate_grounded_topics = FOREACH topic_counts_filtered GENERATE
+candidate_grounded_topics = FOREACH topic_counts_all_filtered GENERATE
   topicUri, REPLACE(topicUri, 'Category:', '') AS candidatePrimaryArticleUri,
   articleCount, narrowerTopicCount, broaderTopicCount;
 

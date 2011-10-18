@@ -62,7 +62,7 @@ joined_topics_abstracts = JOIN
 
 topics_abstracts = FOREACH joined_topics_abstracts
   GENERATE
-   grounded_topics_articles_with_paths::topicUri AS topicUri,
+   REPLACE(grounded_topics_articles_with_paths::topicUri, 'Category:', '') AS topicUri,
    grounded_topics_articles_with_paths::paths AS paths,
    filtered_article_abstracts::articleUri AS articleUri,
    filtered_article_abstracts::articleAbstract AS articleAbstract;

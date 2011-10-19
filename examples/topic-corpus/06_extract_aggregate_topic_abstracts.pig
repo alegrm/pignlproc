@@ -85,7 +85,7 @@ ordered_topics = ORDER filtered_topics2 BY abstractCount DESC, topicUri ASC;
 -- TSV export suitable for direct Solr indexing
 tsv_topics_abstracts = FOREACH ordered_topics
   GENERATE
-    topicUri, abstractCount, paths,
+    topicUri, REPLACE(topicUri, '_',' ') AS label, abstractCount, paths,
     SafeTsvText(aggregateTopicAbstract) AS aggregateTopicAbstract;
 
 STORE tsv_topics_abstracts

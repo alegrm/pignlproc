@@ -42,6 +42,7 @@ appear
 appreciate
 appropriate
 are
+aren
 aren't
 around
 as
@@ -104,6 +105,7 @@ containing
 contains
 corresponding
 could
+couldn
 couldn't
 course
 currently
@@ -112,12 +114,15 @@ definitely
 described
 despite
 did
+didn
 didn't
 different
 do
 does
+doesn
 doesn't
 doing
+don
 don't
 done
 down
@@ -179,12 +184,15 @@ gotten
 greetings
 h
 had
+hadn
 hadn't
 happens
 hardly
 has
+hasn
 hasn't
 have
+haven
 haven't
 having
 he
@@ -232,6 +240,7 @@ instead
 into
 inward
 is
+isn
 isn't
 it
 it'd
@@ -395,6 +404,7 @@ several
 shall
 she
 should
+shouldn
 shouldn't
 since
 six
@@ -507,6 +517,7 @@ w
 want
 wants
 was
+wasn
 wasn't
 way
 we
@@ -518,6 +529,7 @@ welcome
 well
 went
 were
+weren
 weren't
 what
 what's
@@ -554,6 +566,7 @@ won't
 wonder
 would
 would
+wouldn
 wouldn't
 x
 y

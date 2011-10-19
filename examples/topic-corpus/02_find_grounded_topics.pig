@@ -95,8 +95,7 @@ topic_counts_all_filter = FOREACH topic_counts_children_filter GENERATE
 
 -- filter those that have _by_ and Wikipedia on the category
 topic_counts_all_filtered = FILTER topic_counts_all_filter BY
-	not topicUri matches '.*_by_.*' 
-	AND not topicUri matches '.*Wikipedia_.*';
+	not topicUri matches '.*Wikipedia_.*';
 -- AGRM end
 
 -- Project early: we don't need to load the abstract content: use NULL as

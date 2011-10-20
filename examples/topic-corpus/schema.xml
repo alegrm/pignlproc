@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <schema name="example" version="1.3">
   <types>
-    <fieldType name="string" class="solr.StrField" sortMissingLast="true"
-      omitNorms="true"/>
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" omitNorms="true"/>
 
-    <fieldType name="int" class="solr.TrieIntField" precisionStep="0"
-      omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
 
     <fieldType name="random" class="solr.RandomSortField" indexed="true" />
 
+    <field name="name_auto" type="text_auto" indexed="true" stored="true" multiValued="false" />
+
+	<fieldType name="text_auto" class="solr.TextField">
+	 <analyzer>
+		<tokenizer class="solr.KeywordTokenizerFactory"/>
+		<filter class="solr.LowerCaseFilterFactory"/>
+	 </analyzer>
+	</fieldType>
+	
     <fieldType name="text" class="solr.TextField">
       <analyzer type="index">
         <tokenizer class="solr.StandardTokenizerFactory"/>
@@ -41,10 +48,11 @@
  </types>
 
  <fields>
-   <field name="id" type="string" indexed="true" stored="true" required="true" /> 
-   <field name="type" type="string" indexed="true" stored="true" multiValued="true" />
-   <field name="paths" type="string" indexed="true" stored="true" multiValued="true" /> 
-   <field name="text" type="text" indexed="true" stored="false"
+   <field name="id"    type="string"    indexed="true" stored="true" required="true" /> 
+   <field name="label" type="name_auto" indexed="true" stored="true" />
+   <field name="type"  type="string"    indexed="true" stored="true" multiValued="true" />
+   <field name="paths" type="string"    indexed="true" stored="true" multiValued="true" /> 
+   <field name="text"  type="text"      indexed="true" stored="false"
      termVectors="true" termPositions="false" termOffsets="false" />
    <field name="popularity" type="int" indexed="true" stored="true" />
  </fields>

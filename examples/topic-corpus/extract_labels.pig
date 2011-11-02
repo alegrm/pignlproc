@@ -19,7 +19,7 @@ REGISTER target/pignlproc-0.1.0-SNAPSHOT.jar
     'http://purl.org/dc/terms/subject')
   AS (uri: chararray, label: chararray);*/
 
-article_labels = LOAD 'workspace/long_abstracts_en.nt.bz2'
+article_labels = LOAD 'workspace/labels_en.nt.bz2'
   USING pignlproc.storage.UriStringLiteralNTriplesLoader(
     'http://www.w3.org/2000/01/rdf-schema#label',
     'http://dbpedia.org/resource/')
@@ -30,14 +30,14 @@ article_abstracts = LOAD 'workspace/long_abstracts_en.nt.bz2'
   USING pignlproc.storage.UriStringLiteralNTriplesLoader(
     'http://dbpedia.org/ontology/abstract',
     'http://dbpedia.org/resource/')
-  AS (articleUri: chararray, articleAbstract: chararray);
+  AS (articleUri: chararray, abstract: chararray);
 
 articles = JOIN
   article_labels BY uri,
   article_abstracts BY articleUri;
 
 -- store tsv file to feed solr
-STORE labels INTO 'workspace/articles_wikipedia.tsv';
+STORE articles INTO 'workspace/articles_wikipedia.tsv';
 
 
 

@@ -3,18 +3,15 @@
   <types>
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" omitNorms="true"/>
 
-    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
-
-    <fieldType name="random" class="solr.RandomSortField" indexed="true" />
-
-    <field name="name_auto" type="text_auto" indexed="true" stored="true" multiValued="false" />
-
-	<fieldType name="text_auto" class="solr.TextField">
-	 <analyzer>
-		<tokenizer class="solr.KeywordTokenizerFactory"/>
-		<filter class="solr.LowerCaseFilterFactory"/>
-	 </analyzer>
-	</fieldType>
+    <fieldType name="text_ws" class="solr.TextField" positionIncrementGap="10">
+      <analyzer type="index">
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+      </analyzer>
+	 <analyzer type="query">
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+      </analyzer>
+    </fieldType>
+ 
 	
     <fieldType name="text" class="solr.TextField">
       <analyzer type="index">
@@ -48,10 +45,9 @@
  </types>
 
  <fields>
-   <field name="uri"    type="string"    indexed="true" stored="true" required="true" /> 
-   <field name="label" type="name_auto" indexed="true" stored="true" />
-   <field name="text"  type="string"    indexed="true" stored="true" />
-   <field name="paths" type="string"    indexed="true" stored="true" /> 
+   <field name="uri"   type="string"  indexed="true" stored="true" required="true" /> 
+   <field name="label" type="text_ws" indexed="true" stored="true" />
+   <field name="text"  type="text"    indexed="true" stored="true" />
  </fields>
 
  <uniqueKey>uri</uniqueKey>

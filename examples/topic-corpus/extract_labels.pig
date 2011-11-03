@@ -53,12 +53,12 @@ articles = JOIN
   filtered_article_abstracts BY articleUri;
 
 -- elminate articles that are disambiguation pages
-
 disambiguate_articles_join = JOIN 
-  articles BY uri,
+  articles BY uri LEFT OUTER,
   disambiguation_uris_distinct BY disambuguation_uri;
-
+  
 STORE disambiguate_articles_join INTO 'workspace/disambiguate_articles_join.tsv';
+
 
 SPLIT disambiguate_articles_join INTO
    disambiguate_articles IF disambuguation_uri IS NOT NULL,

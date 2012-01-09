@@ -91,6 +91,11 @@ tsv_topics_abstracts = FOREACH ordered_topics
 STORE tsv_topics_abstracts
   INTO 'workspace/topics_abstracts.tsv';
 
+-- TSV export ONLY ids for future filtering
+tsv_topics = FOREACH ordered_topics
+  GENERATE
+    topicUri, REPLACE(topicUri, '_',' ') AS label, abstractCount, paths;
+
 -- NTriples export suitable for Stanbol EntityHub import
 ntriples_topics_abstracts = FOREACH ordered_topics
   GENERATE topicUri, aggregateTopicAbstract;

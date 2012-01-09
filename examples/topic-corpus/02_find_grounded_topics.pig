@@ -41,6 +41,7 @@ topic_counts_filtered = FILTER topic_counts BY
   topicUri != 'Category:People'
   AND topicUri != 'Category:Living_people'
   AND topicUri != 'Category:Dead_people'
+  AND topicUri != 'Category:Missing_people'
   AND topicUri != 'Category:Chronology'
   AND topicUri != 'Category:Events'
   AND topicUri != 'Category:Years'
@@ -58,14 +59,20 @@ topic_counts_filtered = FILTER topic_counts BY
   AND topicUri != 'Category:Articles_missing_birth_or_death_information'
   AND topicUri != 'Category:Place_of_birth_missing_%28living_people%29'
   AND topicUri != 'Category:Surnames'
-  AND topicUri != 'Category:Wikipedia_1.0_assessments';
+  AND topicUri != 'Category:Wikipedia_1.0_assessments'
+  AND topicUri != 'Category:Categories_by_language'
+  AND topicUri != 'Category:People_by_period';
 
--- AGRM start: get the children of  undesired topics to remove them as well
+-- AGRM and filter those that have _by_ on the category
+-- topic_counts_filtered2 = FILTER topic_counts_filtered BY not topicUri matches '.*_by_.*';
+
+-- AGRM start: get the children of undesired topics to remove them as well
 
 filter_topic_children = FILTER topic_parents BY 
 	broaderTopicUri == 'Category:People'
   OR broaderTopicUri  == 'Category:Living_people'
   OR broaderTopicUri  == 'Category:Dead_people'
+  OR broaderTopicUri  == 'Category:Missing_people'
   OR broaderTopicUri  == 'Category:Chronology'
   OR broaderTopicUri  == 'Category:Events'
   OR broaderTopicUri  == 'Category:Years'
@@ -83,6 +90,8 @@ filter_topic_children = FILTER topic_parents BY
   OR broaderTopicUri  == 'Category:Articles_missing_birth_or_death_information'
   OR broaderTopicUri  == 'Category:Place_of_birth_missing_%28living_people%29'
   OR broaderTopicUri  == 'Category:Surnames'
+  OR broaderTopicUri  == 'Category:Categories_by_language'
+  OR broaderTopicUri  == 'Category:People_by_period'
   OR broaderTopicUri  == 'Category:Wikipedia_1.0_assessments';
   
 topic_counts_children_join = JOIN topic_counts_filtered BY topicUri
